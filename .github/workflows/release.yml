@@ -70,7 +70,7 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-  # Windows ARM64 (native runner)
+  # Windows ARM64 (native runner) - PRIMARY TARGET
   build-win-arm64:
     name: Windows ARM64
     needs: setup
@@ -133,12 +133,13 @@ jobs:
           path: packages/desktop/dist/*.zip
           retention-days: 7
 
-  # Windows x64
+  # Windows x64 (optional)
   build-win-x64:
     name: Windows x64
     needs: setup
     runs-on: windows-latest
     timeout-minutes: 60
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -196,12 +197,13 @@ jobs:
           path: packages/desktop/dist/*.zip
           retention-days: 7
 
-  # macOS (Universal: x64 + ARM64)
+  # macOS Universal (optional - requires signing resources)
   build-macos:
     name: macOS Universal
     needs: setup
     runs-on: macos-latest
     timeout-minutes: 60
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -258,12 +260,13 @@ jobs:
           path: packages/desktop/dist/*.{dmg,zip}
           retention-days: 7
 
-  # Linux x64
+  # Linux x64 (optional)
   build-linux-x64:
     name: Linux x64
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -362,12 +365,13 @@ jobs:
           path: packages/desktop/dist/*.{AppImage,deb,rpm,pacman}
           retention-days: 7
 
-  # Linux ARM64
+  # Linux ARM64 (optional)
   build-linux-arm64:
     name: Linux ARM64
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -471,21 +475,17 @@ jobs:
     name: Create Release
     needs:
       - build-win-arm64
-      - build-win-x64
-      - build-macos
-      - build-linux-x64
-      - build-linux-arm64
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
     steps:
-      - name: Download all artifacts
+      - name: Download Windows ARM64 artifacts
         uses: actions/download-artifact@v4
         with:
+          name: ZCode-win-arm64
           path: artifacts
-          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -495,10 +495,6 @@ jobs:
           body_path: packages/desktop/dist/release-notes.txt
           files: |
             artifacts/ZCode-win-arm64/*
-            artifacts/ZCode-win-x64/*
-            artifacts/ZCode-macos/*
-            artifacts/ZCode-linux-x64/*
-            artifacts/ZCode-linux-arm64/*
           draft: false
           prerelease: false
           make_latest: true
