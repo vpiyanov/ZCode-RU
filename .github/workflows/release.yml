@@ -274,9 +274,8 @@ jobs:
           sudo apt-get install -y \
             libfuse2 \
             libappindicator3-1 \
-            libgconf-2-4 \
             libgbm1 \
-            libasound2 \
+            libasound2t64 \
             libatk1.0-0 \
             libcairo2 \
             libcups2 \
@@ -308,7 +307,7 @@ jobs:
             ca-certificates \
             fonts-liberation \
             libappindicator3-1 \
-            libasound2 \
+            libasound2t64 \
             libnss3 \
             lsb-release \
             xdg-utils
@@ -378,9 +377,8 @@ jobs:
           sudo apt-get install -y \
             libfuse2 \
             libappindicator3-1 \
-            libgconf-2-4 \
             libgbm1 \
-            libasound2 \
+            libasound2t64 \
             libatk1.0-0 \
             libcairo2 \
             libcups2 \
@@ -412,7 +410,7 @@ jobs:
             ca-certificates \
             fonts-liberation \
             libappindicator3-1 \
-            libasound2 \
+            libasound2t64 \
             libnss3 \
             lsb-release \
             xdg-utils
