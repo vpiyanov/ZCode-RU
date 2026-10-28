@@ -110,7 +110,6 @@ jobs:
             pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
           done
         shell: bash
-        shell: bash
 
       - name: Build CLI workspace packages
         run: pnpm --filter @zcode/cli... run build
@@ -174,7 +173,6 @@ jobs:
             pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
           done
         shell: bash
-        shell: bash
 
       - name: Build CLI workspace packages
         run: pnpm --filter @zcode/cli... run build
@@ -237,7 +235,6 @@ jobs:
           for i in 1 2 3; do
             pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
           done
-        shell: bash
         shell: bash
 
       - name: Build CLI workspace packages
@@ -345,7 +342,6 @@ jobs:
             pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
           done
         shell: bash
-        shell: bash
 
       - name: Build CLI workspace packages
         run: pnpm --filter @zcode/cli... run build
@@ -449,7 +445,6 @@ jobs:
           for i in 1 2 3; do
             pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
           done
-        shell: bash
         shell: bash
 
       - name: Build CLI workspace packages
