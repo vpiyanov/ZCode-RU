@@ -63,6 +63,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Build CLI workspace packages
+        run: pnpm --filter @zcode/cli... run build
+        # This builds @zcode/contracts, @zcode/adapters, @zcode/core, @zcode/i18n, etc.
+
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
