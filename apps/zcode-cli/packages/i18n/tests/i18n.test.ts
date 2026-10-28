@@ -13,14 +13,17 @@ describe("i18n catalog", () => {
   it("resolves supported, auto, and unknown locale values deterministically", () => {
     expect(DEFAULT_LOCALE).toBe("en-US");
     expect(resolveLocale("zh-CN")).toBe("zh-CN");
+    expect(resolveLocale("ru-RU")).toBe("ru-RU");
     expect(resolveLocale("auto", "zh_Hans_CN")).toBe("zh-CN");
     expect(resolveLocale("auto", "en-GB")).toBe("en-US");
+    expect(resolveLocale("auto", "ru_RU.UTF-8")).toBe("ru-RU");
     expect(resolveLocale("fr-FR")).toBe("en-US");
     expect(getZCodeCopy("auto", "zh_CN.UTF-8").locale).toBe("zh-CN");
   });
 
   it("detects supported locales from adapter-provided OS hints", () => {
     expect(detectLocale({ env: { LC_ALL: "zh_CN.UTF-8" } })).toBe("zh-CN");
+    expect(detectLocale({ env: { LC_ALL: "ru_RU.UTF-8" } })).toBe("ru-RU");
     expect(detectLocale({ env: { LC_ALL: "C.UTF-8", LC_MESSAGES: "en_GB.UTF-8" } })).toBe("en-US");
     expect(detectLocale({ env: { LANG: "fr_FR.UTF-8" }, intlLocale: "zh-Hans-CN" })).toBe("zh-CN");
     expect(detectLocale({ env: { LANGUAGE: "fr:zh_CN:en_US" } })).toBe("zh-CN");
@@ -31,6 +34,7 @@ describe("i18n catalog", () => {
     expect(isUiLocale("auto")).toBe(true);
     expect(isUiLocale("en-US")).toBe(true);
     expect(isUiLocale("zh-CN")).toBe(true);
+    expect(isUiLocale("ru-RU")).toBe(true);
     expect(isUiLocale("fr-FR")).toBe(false);
   });
 

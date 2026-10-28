@@ -5,6 +5,7 @@ import {
   isTrustedRewardsUrl,
   REWARDS_PARTITION,
   resolveRewardsOrigin,
+  toExternalLocale,
   ZCODE_ENV,
   type RewardsContext,
 } from "@zcode/shared";
@@ -59,9 +60,9 @@ export function RewardsWebview({ onClose }: { onClose: () => void }) {
   const ready = useRef(false);
   const injectedIdentity = useRef<string | null | undefined>(undefined);
   const authSnapshot = useRef({ fingerprint: "", revision: 0 });
-  const latest = useRef({ theme, locale, userId });
+  const latest = useRef({ theme, locale: toExternalLocale(locale), userId });
   // 读取后的身份比较覆盖 React effect 尚未执行的窗口，不能让旧账号写入新页面。
-  latest.current = { theme, locale, userId };
+  latest.current = { theme, locale: toExternalLocale(locale), userId };
   const [error, setError] = useState(false);
   const [navigation, setNavigation] = useState({ loading: true, back: false, forward: false });
   const inject = useCallback(async () => {
@@ -218,7 +219,7 @@ export function RewardsWebview({ onClose }: { onClose: () => void }) {
           createRewardsInjectionScript(
             {
               theme,
-              locale,
+              locale: toExternalLocale(locale),
               auth: { status: "anonymous", provider: null, revision: generation.current },
             },
             {},

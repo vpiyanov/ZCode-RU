@@ -1,5 +1,5 @@
 import type { ICloudContentService } from "@zcode/services";
-import type { MarketingAsset, MarketingVisual } from "@zcode/shared";
+import type { Locale, MarketingAsset, MarketingVisual } from "@zcode/shared";
 import type { CloudDialogHero } from "@/components/cloud-content-dialog/cloudContentDialogTypes.js";
 import { logger } from "@/logger.js";
 
@@ -63,15 +63,15 @@ function heroData(args: Record<string, unknown> | undefined, locale: string) {
     benefits,
     endsAtLabel:
       typeof plan.ends_at === "number" ? new Date(plan.ends_at * 1000).toLocaleString(locale) : "",
-    endsAtPrefix: locale === "zh-CN" ? "有效期至" : "Valid until",
-    replayLabel: locale === "zh-CN" ? "重播" : "Replay",
+    endsAtPrefix: locale === "zh-CN" ? "有效期至" : locale === "ru-RU" ? "Действует до" : "Valid until",
+    replayLabel: locale === "zh-CN" ? "重播" : locale === "ru-RU" ? "Повторить" : "Replay",
   };
 }
 
 export async function prepareMarketingHero(
   visual: MarketingVisual | null | undefined,
   service: ICloudContentService | undefined,
-  locale: "zh-CN" | "en-US",
+  locale: Locale,
   desktop: boolean,
 ): Promise<PreparedMarketingHero> {
   if (!visual || !service) return empty();

@@ -9,7 +9,7 @@ type TrayCapture = {
 };
 type TrayTestGlobal = typeof globalThis & { __trayExportCapture?: TrayCapture };
 type DesktopBridge = {
-  zcode: { setApplicationLocale: (locale: "en-US" | "zh-CN") => Promise<void> };
+  zcode: { setApplicationLocale: (locale: "en-US" | "zh-CN" | "ru-RU") => Promise<void> };
 };
 
 describe("Windows 托盘导出日志", () => {

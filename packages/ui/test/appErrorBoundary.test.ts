@@ -36,9 +36,9 @@ describe("AppErrorBoundary", () => {
 
     const html = renderToStaticMarkup(boundary.render());
 
-    expect(html).toMatch(/应用界面出了点问题|The app ran into a problem/);
-    expect(html).toMatch(/重试|Try again/);
-    expect(html).toMatch(/刷新应用|Reload app/);
+    expect(html).toMatch(/应用界面出了点问题|The app ran into a problem|В приложении возникла проблема/);
+    expect(html).toMatch(/重试|Try again|Попробовать снова/);
+    expect(html).toMatch(/刷新应用|Reload app|Перезапустить приложение/);
     expect(html).toContain("boom");
     expect(html).toContain("BrokenPanel");
   });
@@ -64,8 +64,10 @@ describe("AppErrorBoundary", () => {
 
     const html = renderToStaticMarkup(boundary.render());
 
-    expect(html).toMatch(/这块界面出了点问题|This section ran into a problem/);
-    expect(html).toMatch(/重试此区域|Try this section again/);
+    expect(html).toMatch(
+      /这块界面出了点问题|This section ran into a problem|В этом разделе возникла проблема/,
+    );
+    expect(html).toMatch(/重试此区域|Try this section again|Повторить попытку в этом разделе/);
     expect(html).toContain("chat exploded");
     expect(html).toContain("ChatView");
   });

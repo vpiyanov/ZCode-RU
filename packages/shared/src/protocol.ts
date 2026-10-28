@@ -74,7 +74,17 @@ export interface SystemInfo {
 }
 
 /** 支持的语言 */
-export type Locale = "zh-CN" | "en-US";
+export type Locale = "zh-CN" | "en-US" | "ru-RU";
+
+/** 仅支持中英双语的外部资源（官网 WebView、分享站、反馈工单等）使用的语言。 */
+export type ExternalLocale = "zh-CN" | "en-US";
+
+export const EXTERNAL_LOCALES = ["zh-CN", "en-US"] as const satisfies readonly ExternalLocale[];
+
+/** 把任意界面语言收敛到外部资源支持的语言；ru-RU 等未覆盖语言回退英文。 */
+export function toExternalLocale(locale: Locale | undefined | null): ExternalLocale {
+  return locale === "zh-CN" ? "zh-CN" : "en-US";
+}
 
 /** 界面语言偏好；system 表示跟随当前运行端系统语言。 */
 export type LocalePreference = "system" | Locale;

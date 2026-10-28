@@ -11,7 +11,7 @@ import {
 type DesktopBridge = {
   executeDesktopCommand(command: string): Promise<void>;
   canOpenCommunity(locale: "zh-CN" | "en-US"): Promise<boolean>;
-  setApplicationLocale(locale: "zh-CN" | "en-US"): Promise<void>;
+  setApplicationLocale(locale: "zh-CN" | "en-US" | "ru-RU"): Promise<void>;
 };
 
 async function command(command: string) {
