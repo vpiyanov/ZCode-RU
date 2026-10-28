@@ -19,9 +19,9 @@ env:
   PUPPETEER_SKIP_DOWNLOAD: '1'
 
 jobs:
-  # Shared setup: install deps once on ubuntu, cache node_modules
+  # Shared setup: populate pnpm store cache (download all packages)
   setup:
-    name: Setup & Cache
+    name: Setup & Cache Store
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -48,24 +48,20 @@ jobs:
         id: pnpm-store
         run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      - name: Cache node_modules
+      - name: Cache pnpm store
         id: cache
         uses: actions/cache@v4
         with:
-          path: |
-            ${{ steps.pnpm-store.outputs.STORE_PATH }}
-            **/node_modules
-            **/.pnpm-store
-          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-
+            pnpm-store-
 
-      - name: Install dependencies
+      - name: Install dependencies (populate store)
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build CLI workspace packages
         run: pnpm --filter @zcode/cli... run build
-        # This builds @zcode/contracts, @zcode/adapters, @zcode/core, @zcode/i18n, etc.
 
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
@@ -94,15 +90,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Restore node_modules
+      - name: Restore pnpm store
         uses: actions/cache@v4
         with:
           path: |
-            **/node_modules
             **/.pnpm-store
-          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-
+            pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build CLI workspace packages
+        run: pnpm --filter @zcode/cli... run build
+
+      - name: Build CLI workspace (zcode.cjs)
+        run: pnpm --filter @zcode/cli run build
 
       - name: Prepare runtime assets (Windows ARM64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
@@ -144,15 +148,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Restore node_modules
+      - name: Restore pnpm store
         uses: actions/cache@v4
         with:
           path: |
-            **/node_modules
             **/.pnpm-store
-          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-
+            pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build CLI workspace packages
+        run: pnpm --filter @zcode/cli... run build
+
+      - name: Build CLI workspace (zcode.cjs)
+        run: pnpm --filter @zcode/cli run build
 
       - name: Prepare runtime assets (Windows x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
@@ -194,15 +206,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Restore node_modules
+      - name: Restore pnpm store
         uses: actions/cache@v4
         with:
           path: |
-            **/node_modules
             **/.pnpm-store
-          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-
+            pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build CLI workspace packages
+        run: pnpm --filter @zcode/cli... run build
+
+      - name: Build CLI workspace (zcode.cjs)
+        run: pnpm --filter @zcode/cli run build
 
       - name: Prepare runtime assets (macOS)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
@@ -288,15 +308,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Restore node_modules
+      - name: Restore pnpm store
         uses: actions/cache@v4
         with:
           path: |
-            **/node_modules
             **/.pnpm-store
-          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-
+            pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build CLI workspace packages
+        run: pnpm --filter @zcode/cli... run build
+
+      - name: Build CLI workspace (zcode.cjs)
+        run: pnpm --filter @zcode/cli run build
 
       - name: Prepare runtime assets (Linux x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
@@ -380,15 +408,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Restore node_modules
+      - name: Restore pnpm store
         uses: actions/cache@v4
         with:
           path: |
-            **/node_modules
             **/.pnpm-store
-          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-
+            pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build CLI workspace packages
+        run: pnpm --filter @zcode/cli... run build
+
+      - name: Build CLI workspace (zcode.cjs)
+        run: pnpm --filter @zcode/cli run build
 
       - name: Prepare runtime assets (Linux ARM64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
