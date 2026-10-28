@@ -150,6 +150,16 @@ export function resolveExternalWorkspaceOpenDialogCopy(
     };
   }
 
+  if (locale === "ru-RU") {
+    return {
+      buttons: ["Открыть папку", "Отмена"],
+      title: "Открыть внешнюю ссылку ZCode?",
+      message: "Открыть эту папку в ZCode?",
+      detail: (path) =>
+        `${path}\n\nОткрывайте только папки из доверенных источников. Настройки проекта могут влиять на среду выполнения агента.`,
+    };
+  }
+
   return {
     buttons: ["Open folder", "Cancel"],
     title: "Open external ZCode link?",

@@ -1,6 +1,7 @@
 import { mobilePluginDiscoveryTelemetrySchema } from "@zcode/shared";
 import {
   sessionCreateTelemetrySchema,
+  toExternalLocale,
   type RendererTelemetryEventPayload,
   WEB_REMOTE_CONTROL_WORKSPACE_RECONNECT_TIMEOUT_MS,
   createWebRemoteControlConnectionRecoveryTimeoutFailure,
@@ -333,7 +334,7 @@ async function renderConversationSharePage(): Promise<void> {
     root.render(
       <ConversationShareLandingStatus
         state={{ kind: "error", error: "invalid_contract" }}
-        locale={routeLocale}
+        locale={toExternalLocale(routeLocale)}
       />,
     );
     return;
@@ -387,7 +388,7 @@ async function renderConversationSharePage(): Promise<void> {
         });
       }}
       onLogout={onLogout}
-      locale={routeLocale}
+      locale={toExternalLocale(routeLocale)}
       theme={resolveWebThemePreference("zai-light")}
     />,
   );

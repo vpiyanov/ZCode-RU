@@ -30,6 +30,7 @@ import {
 } from "@/settings/model-provider-section/codingPlanEmbeddedWebview.js";
 import {
   CodingPlanWebviewChannels,
+  toExternalLocale,
   type CodingPlanPurchaseCompletePayload,
   ZCODE_ENV,
   ZCODE_VERSION,
@@ -92,8 +93,8 @@ export function CodingPlanEmbeddedWebviewDialog({
   const webviewRef = useRef<ElectronWebviewTag | null>(null);
   const onOpenResultRef = useRef(onOpenResult);
   onOpenResultRef.current = onOpenResult;
-  // 当前 locale 作为 webview 语言 hint / 注入值；Locale 与 CodingPlanWebviewLocale 同构。
-  const webviewLocale = locale;
+  // 当前 locale 作为 webview 语言 hint / 注入值；官网 WebView 仅支持中英，俄语回退英文。
+  const webviewLocale = toExternalLocale(locale);
   const webviewCleanupRef = useRef<(() => void) | null>(null);
   // webview 是否已 dom-ready：executeJavaScript 只在 ready 后调用，
   // 否则会抛 "WebView must be attached to the DOM and dom-ready emitted"。

@@ -327,22 +327,36 @@ const WARNING_MESSAGE_IDS: Readonly<
   input_attachment_unavailable: "conversationShare.warning.inputAttachmentUnavailable",
 };
 
-const ARTIFACT_TYPE_LABELS: Readonly<Record<string, { zh: string; en: string }>> = {
-  pdf: { zh: "PDF", en: "PDF" },
-  pptx: { zh: "PPT", en: "PowerPoint" },
-  docx: { zh: "Word 文档", en: "Word document" },
-  xlsx: { zh: "Excel 表格", en: "Excel spreadsheet" },
-  image: { zh: "图片", en: "image" },
-  html: { zh: "HTML", en: "HTML" },
-  md: { zh: "Markdown", en: "Markdown" },
-  text: { zh: "纯文本", en: "plain text" },
-  video: { zh: "视频", en: "video" },
-  audio: { zh: "音频", en: "audio" },
+const ARTIFACT_TYPE_LABELS: Readonly<Record<string, { zh: string; en: string; ru: string }>> = {
+  pdf: { zh: "PDF", en: "PDF", ru: "PDF" },
+  pptx: { zh: "PPT", en: "PowerPoint", ru: "PowerPoint" },
+  docx: { zh: "Word 文档", en: "Word document", ru: "Документ Word" },
+  xlsx: { zh: "Excel 表格", en: "Excel spreadsheet", ru: "Таблица Excel" },
+  image: { zh: "图片", en: "image", ru: "изображение" },
+  html: { zh: "HTML", en: "HTML", ru: "HTML" },
+  md: { zh: "Markdown", en: "Markdown", ru: "Markdown" },
+  text: { zh: "纯文本", en: "plain text", ru: "обычный текст" },
+  video: { zh: "视频", en: "video", ru: "видео" },
+  audio: { zh: "音频", en: "audio", ru: "аудио" },
 };
+
+function artifactLabelLocale(locale: string): "zh" | "en" | "ru" {
+  if (locale === "zh-CN") {
+    return "zh";
+  }
+  if (locale === "ru-RU") {
+    return "ru";
+  }
+  return "en";
+}
+
+function artifactListSeparator(locale: string): string {
+  return locale === "zh-CN" ? "、" : ", ";
+}
 
 function artifactLabel(value: string, locale: string): string {
   const key = value.replace(/^\./u, "").toLowerCase();
-  return ARTIFACT_TYPE_LABELS[key]?.[locale === "en-US" ? "en" : "zh"] ?? value.toUpperCase();
+  return ARTIFACT_TYPE_LABELS[key]?.[artifactLabelLocale(locale)] ?? value.toUpperCase();
 }
 
 export function formatConversationShareArtifactType(
@@ -361,12 +375,12 @@ export function formatConversationShareAllowedArtifacts(
     const labels = issue.allowedArtifacts.map((artifact) =>
       artifactLabel(artifact.displayName || artifact.type, locale),
     );
-    return [...new Set(labels)].join(locale === "en-US" ? ", " : "、");
+    return [...new Set(labels)].join(artifactListSeparator(locale));
   }
   if (issue.allowedFormats && issue.allowedFormats.length > 0) {
-    return issue.allowedFormats.join(locale === "en-US" ? ", " : "、");
+    return issue.allowedFormats.join(artifactListSeparator(locale));
   }
-  return locale === "en-US" ? "temporarily unavailable" : "暂时无法获取";
+  return locale === "zh-CN" ? "暂时无法获取" : locale === "ru-RU" ? "временно недоступно" : "temporarily unavailable";
 }
 
 export function resolveConversationShareWarningMessageId(
