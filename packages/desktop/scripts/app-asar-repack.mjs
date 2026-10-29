@@ -112,6 +112,7 @@ export async function replaceAppAsarFromStaging({
   const candidateUnpackedPath = `${candidateAsarPath}.unpacked`;
   const unpackedPath = `${appAsarPath}.unpacked`;
   const originalUnpackedPath = `${appAsarPath}.unpacked`;
+  const platformSpecificDir = `node_modules/node-pty/prebuilds/${targetPlatformKey}`;
 
   console.log(`[asar-repack] sourceDir: ${sourceDir}`);
   console.log(`[asar-repack] appAsarPath: ${appAsarPath}`);
@@ -120,22 +121,7 @@ export async function replaceAppAsarFromStaging({
   console.log(`[asar-repack] candidateUnpackedPath: ${candidateUnpackedPath}`);
   console.log(`[asar-repack] unpackedPath: ${unpackedPath}`);
   console.log(`[asar-repack] originalUnpackedPath: ${originalUnpackedPath}`);
-
-  await Promise.all([
-    rm(candidateAsarPath, { force: true, recursive: true }),
-    rm(candidateUnpackedPath, { force: true, recursive: true }),
-  ]);
-
-  // Extract native modules from the original asar and place them in the staging directory
-  // so that the --unpack-dir option can find them during repacking.
-  // We need to extract the native modules from the original asar's .unpacked directory
-  // (if it exists) or extract them directly from the asar.
-  const originalUnpackedPath = `${appAsarPath}.unpacked`;
-  const platformSpecificDir = `node_modules/node-pty/prebuilds/${targetPlatformKey}`;
-  const sourcePtyPath = `${originalUnpackedPath}/${platformSpecificDir}`;
-  const destPtyPath = `${sourceDir}/${platformSpecificDir}`;
-
-  console.log(`[asar-repack] Looking for native modules at: ${sourcePtyPath}`);
+  console.log(`[asar-repack] platformSpecificDir: ${platformSpecificDir}`);
 
   if (await pathExists(sourcePtyPath)) {
     console.log(`[asar-repack] Found native modules at ${sourcePtyPath}, copying to staging`);
@@ -171,12 +157,12 @@ export async function replaceAppAsarFromStaging({
   }
 
   // Also copy the original .unpacked directory if it exists (for other unpacked files)
-  const originalUnpackedPath = `${appAsarPath}.unpacked`;
-  if (await pathExists(originalUnpackedPath)) {
-    console.log(`[asar-repack] Copying original .unpacked from ${originalUnpackedPath} to ${sourceDir}`);
-    await cp(originalUnpackedPath, sourceDir, { recursive: true });
+  const originalUnpackedPathCheck = `${appAsarPath}.unpacked`;
+  if (await pathExists(originalUnpackedPathCheck)) {
+    console.log(`[asar-repack] Copying original .unpacked from ${originalUnpackedPathCheck} to ${sourceDir}`);
+    await cp(originalUnpackedPathCheck, sourceDir, { recursive: true });
   } else {
-    console.log(`[asar-repack] INFO: original .unpacked not found at ${originalUnpackedPath}, skipping copy`);
+    console.log(`[asar-repack] INFO: original .unpacked not found at ${originalUnpackedPathCheck}, skipping copy`);
   }
 
   // Fallback: ensure node-pty prebuilds exist in staging directory for --unpack-dir to work
