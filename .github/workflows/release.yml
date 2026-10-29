@@ -122,6 +122,9 @@ jobs:
       - name: Prepare runtime assets (Windows ARM64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
         shell: pwsh
+        env:
+          ZCODE_TARGET_ARCH: arm64
+          ZCODE_TARGET_OS: win32
 
       - name: Build Windows ARM64 (NSIS installer)
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --arm64 --publish never
@@ -194,6 +197,9 @@ jobs:
       - name: Prepare runtime assets (Windows x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
         shell: pwsh
+        env:
+          ZCODE_TARGET_OS: win32
+          ZCODE_TARGET_ARCH: x64
 
       - name: Build Windows x64 (NSIS installer)
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --x64 --publish never
@@ -261,6 +267,9 @@ jobs:
 
       - name: Prepare runtime assets (macOS x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+        env:
+          ZCODE_TARGET_OS: darwin
+          ZCODE_TARGET_ARCH: x64
 
       - name: Build macOS x64
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --x64 --publish never
@@ -334,6 +343,9 @@ jobs:
 
       - name: Prepare runtime assets (macOS arm64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+        env:
+          ZCODE_TARGET_OS: darwin
+          ZCODE_TARGET_ARCH: arm64
 
       - name: Build macOS arm64
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --arm64 --publish never
@@ -449,6 +461,9 @@ jobs:
 
       - name: Prepare runtime assets (Linux x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+        env:
+          ZCODE_TARGET_OS: linux
+          ZCODE_TARGET_ARCH: x64
 
       - name: Build Linux x64 (AppImage + deb + rpm)
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --x64 --publish never
@@ -555,6 +570,9 @@ jobs:
 
       - name: Prepare runtime assets (Linux ARM64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+        env:
+          ZCODE_TARGET_OS: linux
+          ZCODE_TARGET_ARCH: arm64
 
       - name: Build Linux ARM64 (AppImage + deb + rpm)
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --arm64 --publish never
