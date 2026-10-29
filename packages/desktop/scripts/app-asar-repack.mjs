@@ -48,13 +48,14 @@ export async function replaceAppAsarFromStaging({
     rm(candidateUnpackedPath, { force: true, recursive: true }),
   ]);
 
-  // The original .unpacked directory only exists if the original asar was created with --unpack-dir.
-  // If it doesn't exist, we don't need to copy it - the new asar will be created without an unpacked dir.
-  // The --unpack-dir option in the pack command will create the unpacked dir from the sourceDir's .unpacked
-  // if it exists. So we only copy if it exists.
+  // The original asar was created with --unpack-dir, so native modules are in the .unpacked subdirectory.
+  // We need to copy the .unpacked CONTENTS to the staging directory root so that --unpack-dir can find them.
+  // The --unpack-dir option expects the directory to exist in the sourceDir tree (e.g., sourceDir/node_modules/...).
+  // But the original asar stores native modules in a .unpacked subdirectory. We need to merge the .unpacked
+  // contents into the sourceDir root so that paths like node_modules/node-pty/prebuilds/win32-arm64 exist.
   if (await pathExists(originalUnpackedPath)) {
-    console.log(`[asar-repack] Copying original .unpacked from ${originalUnpackedPath} to ${sourceDir}`);
-    await cp(originalUnpackedPath, resolve(sourceDir, '.unpacked'), { recursive: true });
+    console.log(`[asar-repack] Copying original .unpacked contents from ${originalUnpackedPath} to ${sourceDir}`);
+    await cp(originalUnpackedPath, sourceDir, { recursive: true });
   } else {
     console.log(`[asar-repack] INFO: original .unpacked not found at ${originalUnpackedPath}, skipping copy`);
   }
