@@ -33,23 +33,35 @@ export async function replaceAppAsarFromStaging({
   const candidateUnpackedPath = `${candidateAsarPath}.unpacked`;
   const unpackedPath = `${appAsarPath}.unpacked`;
 
+  console.log(`[asar-repack] sourceDir: ${sourceDir}`);
+  console.log(`[asar-repack] appAsarPath: ${appAsarPath}`);
+  console.log(`[asar-repack] targetPlatformKey: ${targetPlatformKey}`);
+  console.log(`[asar-repack] candidateAsarPath: ${candidateAsarPath}`);
+  console.log(`[asar-repack] candidateUnpackedPath: ${candidateUnpackedPath}`);
+  console.log(`[asar-repack] unpackedPath: ${unpackedPath}`);
+
   await Promise.all([
     rm(candidateAsarPath, { force: true, recursive: true }),
     rm(candidateUnpackedPath, { force: true, recursive: true }),
   ]);
 
   try {
-    runAsarCommand(
-      createAppAsarPackArgs({
-        sourceDir,
-        destinationPath: candidateAsarPath,
-        targetPlatformKey,
-      }),
-    );
+    const packArgs = createAppAsarPackArgs({
+      sourceDir,
+      destinationPath: candidateAsarPath,
+      targetPlatformKey,
+    });
+    console.log(`[asar-repack] pack args:`, packArgs);
+
+    runAsarCommand(packArgs);
+
+    console.log(`[asar-repack] Checking candidateAsarPath: ${candidateAsarPath}`);
+    console.log(`[asar-repack] Checking candidateUnpackedPath: ${candidateUnpackedPath}`);
 
     if (!(await pathExists(candidateAsarPath)) || !(await pathExists(candidateUnpackedPath))) {
       // CI 的 TMPDIR 位于隐藏目录 `.tmp`。旧 glob 含 `**/`，@electron/asar 用绝对路径
       // 匹配时不会跨过隐藏目录，导致 native 被写回 asar，同时遗留旧 unpacked 形成物理双份。
+      console.error(`[asar-repack] FAILED: candidateAsarPath exists: ${await pathExists(candidateAsarPath)}, candidateUnpackedPath exists: ${await pathExists(candidateUnpackedPath)}`);
       throw new Error(`重打包结果缺少 app.asar 或 app.asar.unpacked: ${candidateAsarPath}`);
     }
 

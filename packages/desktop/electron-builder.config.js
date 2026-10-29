@@ -250,6 +250,7 @@ function buildDesktopArtifactName(platformName, extension = "${ext}") {
 }
 
 function runAsarCommand(args) {
+  console.log(`[asar] Running: ${process.execPath} ${asarCliPath} ${args.join(" ")}`);
   runCommand(process.execPath, [asarCliPath, ...args], {
     cwd: import.meta.dirname,
     env: process.env,
@@ -257,11 +258,10 @@ function runAsarCommand(args) {
 }
 
 function runAsarCommandAndReadStdout(args) {
+  console.log(`[asar] Running (stdout): ${process.execPath} ${asarCliPath} ${args.join(" ")}`);
   return runCommandAndReadStdout(process.execPath, [asarCliPath, ...args], {
     cwd: import.meta.dirname,
     env: process.env,
-    // app.asar 在当前桌面包体积较大，asar list 输出可能超过默认缓冲并触发 ENOBUFS。
-    // 这里显式放大缓冲，避免“为了判断是否需要注入”反而把打包流程误判失败。
     maxBuffer: commandStdoutMaxBuffer,
     stdio: ["ignore", "pipe", "inherit"],
   });
