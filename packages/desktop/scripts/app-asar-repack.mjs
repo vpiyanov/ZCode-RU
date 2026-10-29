@@ -62,17 +62,17 @@ async function extractNodePtyFromAsar({ appAsarPath, targetPlatformKey, sourceDi
     await rm(tempExtractDir, { force: true, recursive: true });
     await mkdir(tempExtractDir, { recursive: true });
     
-    // appAsarPath is already destructured from the parameter object
     if (!appAsarPath) {
       console.warn(`[asar-repack] WARNING: No appAsarPath provided for extraction`);
       return;
     }
     
+    // Note: --filter option is not supported by @electron/asar on all platforms
+    // We extract the entire asar and then copy only what we need
     runAsarCommand([
       "extract",
       appAsarPath,
-      tempExtractDir,
-      `--filter=${platformSpecificDir}/**`
+      tempExtractDir
     ]);
     
     const extractedPtyPath = `${tempExtractDir}/${platformSpecificDir}`;
