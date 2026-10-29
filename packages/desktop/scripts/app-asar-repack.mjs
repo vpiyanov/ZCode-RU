@@ -48,13 +48,15 @@ export async function replaceAppAsarFromStaging({
     rm(candidateUnpackedPath, { force: true, recursive: true }),
   ]);
 
-  // Copy the original .unpacked directory to the staging area so that
-  // --unpack-dir can find the native modules
+  // The original .unpacked directory only exists if the original asar was created with --unpack-dir.
+  // If it doesn't exist, we don't need to copy it - the new asar will be created without an unpacked dir.
+  // The --unpack-dir option in the pack command will create the unpacked dir from the sourceDir's .unpacked
+  // if it exists. So we only copy if it exists.
   if (await pathExists(originalUnpackedPath)) {
     console.log(`[asar-repack] Copying original .unpacked from ${originalUnpackedPath} to ${sourceDir}`);
     await cp(originalUnpackedPath, resolve(sourceDir, '.unpacked'), { recursive: true });
   } else {
-    console.log(`[asar-repack] WARNING: original .unpacked not found at ${originalUnpackedPath}`);
+    console.log(`[asar-repack] INFO: original .unpacked not found at ${originalUnpackedPath}, skipping copy`);
   }
 
   try {
