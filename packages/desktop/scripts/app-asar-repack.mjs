@@ -140,11 +140,12 @@ export async function replaceAppAsarFromStaging({
     
     try {
       // Extract the specific native module directory from the original asar
+      // Note: --filter option is not supported by @electron/asar on all platforms
+      // We extract the entire asar and then copy only what we need
       runAsarCommand([
         "extract",
         appAsarPath,
-        tempExtractDir,
-        `--filter=${platformSpecificDir}/**`
+        tempExtractDir
       ]);
       
       const extractedPtyPath = `${tempExtractDir}/${platformSpecificDir}`;
