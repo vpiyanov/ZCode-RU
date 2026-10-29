@@ -23,6 +23,7 @@ import {
   stageSharpIntoBundledAgents,
 } from "./sharp-package-assets.mjs";
 import { stageKoffiIntoBundledAgents } from "./koffi-package-assets.mjs";
+import { isRealComputerUseProducerInstalled } from "./computer-use-producer.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const desktopRoot = resolve(scriptDir, "..");
@@ -478,7 +479,7 @@ function stageKoffiForCuaPlugin() {
   }
   // Only stage koffi if the real Computer Use producer is installed.
   // The open-source placeholder package doesn't have koffi as a dependency.
-  if (!isRealComputerUseProducerInstalled({ desktopPackageRoot })) {
+  if (!isRealComputerUseProducerInstalled({ desktopPackageRoot: desktopRoot })) {
     console.log("[prepare:agent-bundle] real CUA producer not installed, skip koffi staging");
     return;
   }
