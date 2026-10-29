@@ -123,16 +123,17 @@ jobs:
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
         shell: pwsh
 
-      - name: Build Windows ARM64 (unpacked)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --arm64 --dir --publish never
+      - name: Build Windows ARM64 (NSIS installer)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --arm64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Zip Windows ARM64 app
-        run: |
-          cd packages/desktop/dist/win-arm64-unpacked
-          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-win-arm64-${{ github.ref_name }}.zip .
-        shell: bash
+      - name: Upload Windows ARM64 installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZCode-win-arm64
+          path: packages/desktop/dist/*.exe
+          retention-days: 7
 
       - name: Upload Windows ARM64 artifact
         uses: actions/upload-artifact@v4
@@ -193,22 +194,16 @@ jobs:
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
         shell: pwsh
 
-      - name: Build Windows x64 (unpacked)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --x64 --dir --publish never
+      - name: Build Windows x64 (NSIS installer)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --x64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Zip Windows x64 app
-        run: |
-          cd packages/desktop/dist/win-x64-unpacked
-          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-win-x64-${{ github.ref_name }}.zip .
-        shell: bash
-
-      - name: Upload Windows x64 artifact
+      - name: Upload Windows x64 installer
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-win-x64
-          path: packages/desktop/dist/ZCode-win-x64-*.zip
+          path: packages/desktop/dist/*.exe
           retention-days: 7
 
   # macOS Universal (optional - requires signing resources)
@@ -262,16 +257,17 @@ jobs:
       - name: Prepare runtime assets (macOS)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
 
-      - name: Build macOS Universal (unpacked)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --universal --dir --publish never
+      - name: Build macOS Universal (dmg + zip)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --universal --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Zip macOS app
-        run: |
-          cd packages/desktop/dist/mac-universal-unpacked
-          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-macos-${{ github.ref_name }}.zip .
-        shell: bash
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZCode-macos
+          path: packages/desktop/dist/*.{dmg,zip}
+          retention-days: 7
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -376,20 +372,14 @@ jobs:
       - name: Prepare runtime assets (Linux x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
 
-      - name: Build Linux x64 (unpacked)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --x64 --dir --publish never
+      - name: Build Linux x64 (AppImage + deb + rpm)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --x64 --publish never
 
-      - name: Zip Linux x64 app
-        run: |
-          cd packages/desktop/dist/linux-unpacked
-          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-linux-x64-${{ github.ref_name }}.zip .
-        shell: bash
-
-      - name: Upload Linux x64 artifact
+      - name: Upload Linux x64 artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-linux-x64
-          path: packages/desktop/dist/ZCode-linux-x64-*.zip
+          path: packages/desktop/dist/*.{AppImage,deb,rpm}
           retention-days: 7
 
   # Linux ARM64 (optional)
@@ -488,20 +478,14 @@ jobs:
       - name: Prepare runtime assets (Linux ARM64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
 
-      - name: Build Linux ARM64 (unpacked)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --arm64 --dir --publish never
+      - name: Build Linux ARM64 (AppImage + deb + rpm)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --arm64 --publish never
 
-      - name: Zip Linux ARM64 app
-        run: |
-          cd packages/desktop/dist/linux-arm64-unpacked
-          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-linux-arm64-${{ github.ref_name }}.zip .
-        shell: bash
-
-      - name: Upload Linux ARM64 artifact
+      - name: Upload Linux ARM64 artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-linux-arm64
-          path: packages/desktop/dist/ZCode-linux-arm64-*.zip
+          path: packages/desktop/dist/*.{AppImage,deb,rpm}
           retention-days: 7
 
   # Create GitHub Release with all available artifacts
@@ -515,7 +499,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download Windows ARM64 artifact
+      - name: Download Windows ARM64 installer
         uses: actions/download-artifact@v4
         with:
           name: ZCode-win-arm64
@@ -534,11 +518,11 @@ jobs:
           name: ZCode ${{ github.ref_name }}
           body_path: packages/desktop/dist/release-notes.txt
           files: |
-            artifacts/ZCode-win-arm64/*
-            artifacts/ZCode-win-x64/*
-            artifacts/ZCode-macos/*
-            artifacts/ZCode-linux-x64/*
-            artifacts/ZCode-linux-arm64/*
+            artifacts/ZCode-win-arm64/*.exe
+            artifacts/ZCode-win-x64/*.exe
+            artifacts/ZCode-macos/*.{dmg,zip}
+            artifacts/ZCode-linux-x64/*.{AppImage,deb,rpm}
+            artifacts/ZCode-linux-arm64/*.{AppImage,deb,rpm}
           draft: false
           prerelease: false
           make_latest: true
