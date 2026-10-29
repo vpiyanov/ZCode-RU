@@ -21,6 +21,17 @@ function normalizeTargetOs(rawOs) {
 
 function normalizeTargetArch(rawArch) {
   const value = (rawArch ?? "").toLowerCase();
+  // Handle numeric arch values from electron-builder
+  if (typeof rawArch === "number") {
+    switch (rawArch) {
+      case 1:
+        return "x64";
+      case 3:
+        return "arm64";
+      default:
+        throw new Error(`Unsupported numeric target arch: ${rawArch}`);
+    }
+  }
   switch (value) {
     case "x64":
     case "amd64":
