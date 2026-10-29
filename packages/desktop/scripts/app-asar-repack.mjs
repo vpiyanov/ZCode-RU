@@ -32,7 +32,7 @@ async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, a
   } catch {
     console.warn(`[asar-repack] WARNING: Could not resolve node-pty package.json`);
     // Try to extract from the original asar as a fallback
-    await extractNodePtyFromAsar({ appAsarPath: arguments[2], targetPlatformKey, sourceDir });
+    await extractNodePtyFromAsar({ appAsarPath, targetPlatformKey, sourceDir });
     return;
   }
 
