@@ -510,6 +510,7 @@ function assertPackagedCuaSharp(context) {
 }
 
 function assertPackagedCuaKoffi(context) {
+  if (!shouldPackageComputerUseHelper) return;
   const contextPlatformKey = getContextPlatformKey(context);
   // Convert contextPlatformKey to targetPlatform format for verifyStagedKoffi
   const [os, arch] = contextPlatformKey.split("-");
