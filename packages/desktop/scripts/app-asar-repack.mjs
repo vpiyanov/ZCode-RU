@@ -113,6 +113,8 @@ export async function replaceAppAsarFromStaging({
   const unpackedPath = `${appAsarPath}.unpacked`;
   const originalUnpackedPath = `${appAsarPath}.unpacked`;
   const platformSpecificDir = `node_modules/node-pty/prebuilds/${targetPlatformKey}`;
+  const sourcePtyPath = `${appAsarPath}.unpacked/node_modules/node-pty/prebuilds/${targetPlatformKey}`;
+  const destPtyPath = `${sourceDir}/node_modules/node-pty/prebuilds/${targetPlatformKey}`;
 
   console.log(`[asar-repack] sourceDir: ${sourceDir}`);
   console.log(`[asar-repack] appAsarPath: ${appAsarPath}`);
@@ -122,6 +124,8 @@ export async function replaceAppAsarFromStaging({
   console.log(`[asar-repack] unpackedPath: ${unpackedPath}`);
   console.log(`[asar-repack] originalUnpackedPath: ${originalUnpackedPath}`);
   console.log(`[asar-repack] platformSpecificDir: ${platformSpecificDir}`);
+  console.log(`[asar-repack] sourcePtyPath: ${sourcePtyPath}`);
+  console.log(`[asar-repack] destPtyPath: ${destPtyPath}`);
 
   if (await pathExists(sourcePtyPath)) {
     console.log(`[asar-repack] Found native modules at ${sourcePtyPath}, copying to staging`);
