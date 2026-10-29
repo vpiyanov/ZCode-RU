@@ -1,4 +1,5 @@
-import { access, rename, rm } from "node:fs/promises";
+import { access, rename, rm, cp } from "node:fs/promises";
+import { resolve } from "node:path";
 
 export const ASAR_UNPACK_NATIVE_GLOB = "*.{node,dll,dylib,exe}";
 
@@ -32,6 +33,7 @@ export async function replaceAppAsarFromStaging({
   const candidateAsarPath = `${appAsarPath}.next`;
   const candidateUnpackedPath = `${candidateAsarPath}.unpacked`;
   const unpackedPath = `${appAsarPath}.unpacked`;
+  const originalUnpackedPath = `${appAsarPath}.unpacked`;
 
   console.log(`[asar-repack] sourceDir: ${sourceDir}`);
   console.log(`[asar-repack] appAsarPath: ${appAsarPath}`);
@@ -39,11 +41,21 @@ export async function replaceAppAsarFromStaging({
   console.log(`[asar-repack] candidateAsarPath: ${candidateAsarPath}`);
   console.log(`[asar-repack] candidateUnpackedPath: ${candidateUnpackedPath}`);
   console.log(`[asar-repack] unpackedPath: ${unpackedPath}`);
+  console.log(`[asar-repack] originalUnpackedPath: ${originalUnpackedPath}`);
 
   await Promise.all([
     rm(candidateAsarPath, { force: true, recursive: true }),
     rm(candidateUnpackedPath, { force: true, recursive: true }),
   ]);
+
+  // Copy the original .unpacked directory to the staging area so that
+  // --unpack-dir can find the native modules
+  if (await pathExists(originalUnpackedPath)) {
+    console.log(`[asar-repack] Copying original .unpacked from ${originalUnpackedPath} to ${sourceDir}`);
+    await cp(originalUnpackedPath, resolve(sourceDir, '.unpacked'), { recursive: true });
+  } else {
+    console.log(`[asar-repack] WARNING: original .unpacked not found at ${originalUnpackedPath}`);
+  }
 
   try {
     const packArgs = createAppAsarPackArgs({
