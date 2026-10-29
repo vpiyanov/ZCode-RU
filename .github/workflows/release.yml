@@ -119,18 +119,18 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-      - name: Prepare runtime assets (Windows ARM64)
-        run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+      - name: Build desktop app (Windows ARM64)
+        run: pnpm --filter @zcode/desktop run build
         shell: pwsh
         env:
           ZCODE_TARGET_ARCH: arm64
           ZCODE_TARGET_OS: win32
 
       - name: Build Windows ARM64 (NSIS installer)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --arm64 --publish never
+        run: pnpm exec electron-builder --config electron-builder.config.js --win --arm64 --publish never
+        working-directory: packages/desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          ZCODE_TARGET_ARCH: arm64
 
       - name: Upload Windows ARM64 installer
         uses: actions/upload-artifact@v4
@@ -197,18 +197,18 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-      - name: Prepare runtime assets (Windows x64)
-        run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+      - name: Build desktop app (Windows x64)
+        run: pnpm --filter @zcode/desktop run build
         shell: pwsh
         env:
           ZCODE_TARGET_OS: win32
           ZCODE_TARGET_ARCH: x64
 
       - name: Build Windows x64 (NSIS installer)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --x64 --publish never
+        run: pnpm exec electron-builder --config electron-builder.config.js --win --x64 --publish never
+        working-directory: packages/desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          ZCODE_TARGET_ARCH: x64
 
       - name: Upload Windows x64 installer
         uses: actions/upload-artifact@v4
@@ -271,8 +271,8 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-      - name: Prepare runtime assets (macOS x64)
-        run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+      - name: Build desktop app (macOS x64)
+        run: pnpm --filter @zcode/desktop run build
         env:
           ZCODE_TARGET_OS: darwin
           ZCODE_TARGET_ARCH: x64
@@ -351,8 +351,8 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-      - name: Prepare runtime assets (macOS arm64)
-        run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+      - name: Build desktop app (macOS arm64)
+        run: pnpm --filter @zcode/desktop run build
         env:
           ZCODE_TARGET_OS: darwin
           ZCODE_TARGET_ARCH: arm64
@@ -470,8 +470,8 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-      - name: Prepare runtime assets (Linux x64)
-        run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+      - name: Build desktop app (Linux x64)
+        run: pnpm --filter @zcode/desktop run build
         env:
           ZCODE_TARGET_OS: linux
           ZCODE_TARGET_ARCH: x64
@@ -580,8 +580,8 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-      - name: Prepare runtime assets (Linux ARM64)
-        run: pnpm --filter @zcode/desktop run prepare:runtime-assets
+      - name: Build desktop app (Linux ARM64)
+        run: pnpm --filter @zcode/desktop run build
         env:
           ZCODE_TARGET_OS: linux
           ZCODE_TARGET_ARCH: arm64
