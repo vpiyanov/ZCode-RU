@@ -650,10 +650,14 @@ export default {
         : resolve(context.appOutDir, "resources");
     await stageElectronNotices(context.appOutDir, resources, framework.version);
   },
-  afterPack: async (context) => {
+afterPack: async (context) => {
     // Compute target platform from electron-builder context to avoid module-load-time env var issues
+    const ELECTRON_BUILDER_ARCH = {
+      1: "x64",
+      3: "arm64",
+    };
     const contextTargetPlatform = context.electronPlatformName === "win32"
-      ? { os: "win32", arch: context.arch, key: `win32-${context.arch}` }
+      ? { os: "win32", arch: ELECTRON_BUILDER_ARCH[context.arch] || context.arch, key: `win32-${ELECTRON_BUILDER_ARCH[context.arch] || context.arch}` }
       : context.electronPlatformName === "darwin"
         ? { os: "darwin", arch: context.arch, key: `darwin-${context.arch}` }
         : context.electronPlatformName === "linux"
