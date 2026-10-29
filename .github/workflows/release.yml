@@ -70,12 +70,12 @@ jobs:
       - name: Build CLI workspace (zcode.cjs)
         run: pnpm --filter @zcode/cli run build
 
-  # Windows ARM64 (native runner) - PRIMARY TARGET
+  # Windows ARM64 (PRIMARY TARGET - unpacked app, zipped)
   build-win-arm64:
     name: Windows ARM64
     needs: setup
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     env:
       ZCODE_TARGET_ARCH: arm64
     steps:
@@ -123,16 +123,22 @@ jobs:
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
         shell: pwsh
 
-      - name: Build Windows ARM64
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --arm64 --publish never
+      - name: Build Windows ARM64 (unpacked)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --arm64 --dir --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Upload Windows ARM64 artifacts
+      - name: Zip Windows ARM64 app
+        run: |
+          cd packages/desktop/dist/win-arm64-unpacked
+          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-win-arm64-${{ github.ref_name }}.zip .
+        shell: bash
+
+      - name: Upload Windows ARM64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-win-arm64
-          path: packages/desktop/dist/*.zip
+          path: packages/desktop/dist/ZCode-win-arm64-*.zip
           retention-days: 7
 
   # Windows x64 (optional)
@@ -140,7 +146,7 @@ jobs:
     name: Windows x64
     needs: setup
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     continue-on-error: true
     steps:
       - name: Checkout
@@ -187,16 +193,22 @@ jobs:
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
         shell: pwsh
 
-      - name: Build Windows x64
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --x64 --publish never
+      - name: Build Windows x64 (unpacked)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --win --x64 --dir --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Upload Windows x64 artifacts
+      - name: Zip Windows x64 app
+        run: |
+          cd packages/desktop/dist/win-x64-unpacked
+          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-win-x64-${{ github.ref_name }}.zip .
+        shell: bash
+
+      - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-win-x64
-          path: packages/desktop/dist/*.zip
+          path: packages/desktop/dist/ZCode-win-x64-*.zip
           retention-days: 7
 
   # macOS Universal (optional - requires signing resources)
@@ -204,7 +216,7 @@ jobs:
     name: macOS Universal
     needs: setup
     runs-on: macos-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     continue-on-error: true
     steps:
       - name: Checkout
@@ -250,16 +262,22 @@ jobs:
       - name: Prepare runtime assets (macOS)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
 
-      - name: Build macOS Universal (x64 + arm64)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --universal --publish never
+      - name: Build macOS Universal (unpacked)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --universal --dir --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Upload macOS artifacts
+      - name: Zip macOS app
+        run: |
+          cd packages/desktop/dist/mac-universal-unpacked
+          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-macos-${{ github.ref_name }}.zip .
+        shell: bash
+
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-macos
-          path: packages/desktop/dist/*.{dmg,zip}
+          path: packages/desktop/dist/ZCode-macos-*.zip
           retention-days: 7
 
   # Linux x64 (optional)
@@ -318,7 +336,8 @@ jobs:
             libasound2t64 \
             libnss3 \
             lsb-release \
-            xdg-utils
+            xdg-utils \
+            p7zip-full
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -357,14 +376,20 @@ jobs:
       - name: Prepare runtime assets (Linux x64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
 
-      - name: Build Linux x64 (AppImage + deb + rpm + pacman)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --x64 --publish never
+      - name: Build Linux x64 (unpacked)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --x64 --dir --publish never
 
-      - name: Upload Linux x64 artifacts
+      - name: Zip Linux x64 app
+        run: |
+          cd packages/desktop/dist/linux-unpacked
+          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-linux-x64-${{ github.ref_name }}.zip .
+        shell: bash
+
+      - name: Upload Linux x64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-linux-x64
-          path: packages/desktop/dist/*.{AppImage,deb,rpm,pacman}
+          path: packages/desktop/dist/ZCode-linux-x64-*.zip
           retention-days: 7
 
   # Linux ARM64 (optional)
@@ -423,7 +448,8 @@ jobs:
             libasound2t64 \
             libnss3 \
             lsb-release \
-            xdg-utils
+            xdg-utils \
+            p7zip-full
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -462,17 +488,23 @@ jobs:
       - name: Prepare runtime assets (Linux ARM64)
         run: pnpm --filter @zcode/desktop run prepare:runtime-assets
 
-      - name: Build Linux ARM64 (AppImage + deb + rpm + pacman)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --arm64 --publish never
+      - name: Build Linux ARM64 (unpacked)
+        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --arm64 --dir --publish never
 
-      - name: Upload Linux ARM64 artifacts
+      - name: Zip Linux ARM64 app
+        run: |
+          cd packages/desktop/dist/linux-arm64-unpacked
+          ../../../node_modules/.bin/7z a -tzip -mx=9 -r ../../../dist/ZCode-linux-arm64-${{ github.ref_name }}.zip .
+        shell: bash
+
+      - name: Upload Linux ARM64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-linux-arm64
-          path: packages/desktop/dist/*.{AppImage,deb,rpm,pacman}
+          path: packages/desktop/dist/ZCode-linux-arm64-*.zip
           retention-days: 7
 
-  # Create GitHub Release with all artifacts
+  # Create GitHub Release with all available artifacts
   release:
     name: Create Release
     needs:
@@ -483,11 +515,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download Windows ARM64 artifacts
+      - name: Download Windows ARM64 artifact
         uses: actions/download-artifact@v4
         with:
           name: ZCode-win-arm64
           path: artifacts
+
+      - name: Download optional artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -497,6 +535,10 @@ jobs:
           body_path: packages/desktop/dist/release-notes.txt
           files: |
             artifacts/ZCode-win-arm64/*
+            artifacts/ZCode-win-x64/*
+            artifacts/ZCode-macos/*
+            artifacts/ZCode-linux-x64/*
+            artifacts/ZCode-linux-arm64/*
           draft: false
           prerelease: false
           make_latest: true
