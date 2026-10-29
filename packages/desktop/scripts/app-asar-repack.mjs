@@ -17,6 +17,7 @@ async function pathExists(path) {
 
 async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath }) {
   const targetDir = resolve(sourceDir, "node_modules", "node-pty", "prebuilds", targetPlatformKey);
+  console.log(`[asar-repack] Checking for node-pty prebuilds at: ${targetDir}`);
   if (await pathExists(targetDir)) {
     console.log(`[asar-repack] node-pty prebuilds already present at ${targetDir}`);
     return;
@@ -29,6 +30,7 @@ async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, a
   try {
     const packageJsonPath = require.resolve("node-pty/package.json");
     nodePtyPackageRoot = dirname(packageJsonPath);
+    console.log(`[asar-repack] Found node-pty at: ${nodePtyPackageRoot}`);
   } catch {
     console.warn(`[asar-repack] WARNING: Could not resolve node-pty package.json`);
     // Try to extract from the original asar as a fallback
@@ -37,6 +39,7 @@ async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, a
   }
 
   const sourcePrebuildDir = resolve(nodePtyPackageRoot, "prebuilds", targetPlatformKey);
+  console.log(`[asar-repack] Looking for source prebuilds at: ${sourcePrebuildDir}`);
   if (!(await pathExists(sourcePrebuildDir))) {
     console.warn(`[asar-repack] WARNING: Source prebuild directory not found: ${sourcePrebuildDir}`);
     // Try to extract from the original asar as a fallback
@@ -47,6 +50,7 @@ async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, a
   console.log(`[asar-repack] Copying node-pty prebuilds from ${sourcePrebuildDir} to ${targetDir}`);
   await mkdir(targetDir, { recursive: true });
   await cp(sourcePrebuildDir, targetDir, { recursive: true });
+  console.log(`[asar-repack] Copied node-pty prebuilds successfully`);
 }
 
 async function extractNodePtyFromAsar({ appAsarPath, targetPlatformKey, sourceDir }) {
@@ -176,7 +180,9 @@ export async function replaceAppAsarFromStaging({
   }
 
   // Fallback: ensure node-pty prebuilds exist in staging directory for --unpack-dir to work
+  console.log(`[asar-repack] Ensuring node-pty prebuilds in staging...`);
   await ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath });
+  console.log(`[asar-repack] ensureNodePtyPrebuildsInStaging completed`);
 
   try {
     const packArgs = createAppAsarPackArgs({
