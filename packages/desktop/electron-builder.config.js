@@ -651,12 +651,20 @@ export default {
     await stageElectronNotices(context.appOutDir, resources, framework.version);
   },
   afterPack: async (context) => {
+    // Compute target platform from electron-builder context to avoid module-load-time env var issues
+    const contextTargetPlatform = context.electronPlatformName === "win32"
+      ? { os: "win32", arch: context.arch, key: `win32-${context.arch}` }
+      : context.electronPlatformName === "darwin"
+        ? { os: "darwin", arch: context.arch, key: `darwin-${context.arch}` }
+        : context.electronPlatformName === "linux"
+          ? { os: "linux", arch: context.arch, key: `linux-${context.arch}` }
+          : null;
     const actualWindowsTarget =
       context.electronPlatformName === "win32"
         ? resolveElectronBuilderWindowsTarget({
             electronPlatformName: context.electronPlatformName,
             arch: context.arch,
-            configuredTargetPlatform: targetPlatform,
+            configuredTargetPlatform: contextTargetPlatform,
           })
         : null;
     await runTimedAsync("afterPack:injectHoistedRuntimeModulesIntoAsar", () =>
