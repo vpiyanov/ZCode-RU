@@ -153,6 +153,9 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     continue-on-error: true
+    env:
+      ZCODE_TARGET_OS: win32
+      ZCODE_TARGET_ARCH: x64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -251,13 +254,16 @@ jobs:
           restore-keys: |
             pnpm-store-
 
-      - name: Install dependencies
+      - name: Install dependencies (macOS x64 - build native modules)
         run: |
           set -e
           for i in 1 2 3; do
-            pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
+            arch -x86_64 pnpm install --frozen-lockfile && break || sleep 10
           done
         shell: bash
+        env:
+          ZCODE_TARGET_ARCH: x64
+          ZCODE_TARGET_OS: darwin
 
       - name: Build CLI workspace packages
         run: pnpm --filter @zcode/cli... run build
@@ -273,6 +279,7 @@ jobs:
 
       - name: Build macOS x64
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --x64 --publish never
+        working-directory: packages/desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
@@ -327,13 +334,16 @@ jobs:
           restore-keys: |
             pnpm-store-
 
-      - name: Install dependencies
+      - name: Install dependencies (macOS arm64 - build native modules)
         run: |
           set -e
           for i in 1 2 3; do
-            pnpm install --frozen-lockfile --ignore-scripts && break || sleep 10
+            pnpm install --frozen-lockfile && break || sleep 10
           done
         shell: bash
+        env:
+          ZCODE_TARGET_ARCH: arm64
+          ZCODE_TARGET_OS: darwin
 
       - name: Build CLI workspace packages
         run: pnpm --filter @zcode/cli... run build
@@ -349,6 +359,7 @@ jobs:
 
       - name: Build macOS arm64
         run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --mac --arm64 --publish never
+        working-directory: packages/desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
@@ -466,7 +477,8 @@ jobs:
           ZCODE_TARGET_ARCH: x64
 
       - name: Build Linux x64 (AppImage + deb + rpm)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --x64 --publish never
+        run: pnpm exec electron-builder --config electron-builder.config.js --linux --x64 --publish never
+        working-directory: packages/desktop
 
       - name: Upload Linux x64 artifacts
         uses: actions/upload-artifact@v4
@@ -575,7 +587,8 @@ jobs:
           ZCODE_TARGET_ARCH: arm64
 
       - name: Build Linux ARM64 (AppImage + deb + rpm)
-        run: pnpm exec electron-builder --config packages/desktop/electron-builder.config.js --linux --arm64 --publish never
+        run: pnpm exec electron-builder --config electron-builder.config.js --linux --arm64 --publish never
+        working-directory: packages/desktop
 
       - name: Upload Linux ARM64 artifacts
         uses: actions/upload-artifact@v4

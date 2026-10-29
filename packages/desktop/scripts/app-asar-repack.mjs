@@ -4,8 +4,6 @@ import { createRequire } from "node:module";
 
 export const ASAR_UNPACK_NATIVE_GLOB = "*.{node,dll,dylib,exe}";
 
-const require = createRequire(import.meta.url);
-
 async function pathExists(path) {
   try {
     await access(path);
@@ -15,7 +13,7 @@ async function pathExists(path) {
   }
 }
 
-async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath }) {
+async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath, desktopPackageRoot }) {
   const targetDir = resolve(sourceDir, "node_modules", "node-pty", "prebuilds", targetPlatformKey);
   console.log(`[asar-repack] Checking for node-pty prebuilds at: ${targetDir}`);
   if (await pathExists(targetDir)) {
@@ -25,14 +23,17 @@ async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, a
 
   console.log(`[asar-repack] node-pty prebuilds not found at ${targetDir}, attempting to copy from source package`);
 
-  // Try to locate the node-pty package in the current node_modules tree
+  // Try to locate the node-pty package using desktopPackageRoot for proper module resolution
   let nodePtyPackageRoot;
   try {
-    const packageJsonPath = require.resolve("node-pty/package.json");
+    const requireFromDesktop = createRequire(import.meta.url);
+    // Use desktopPackageRoot if provided, otherwise fall back to current resolution
+    const paths = desktopPackageRoot ? [desktopPackageRoot] : undefined;
+    const packageJsonPath = requireFromDesktop.resolve("node-pty/package.json", { paths });
     nodePtyPackageRoot = dirname(packageJsonPath);
     console.log(`[asar-repack] Found node-pty at: ${nodePtyPackageRoot}`);
-  } catch {
-    console.warn(`[asar-repack] WARNING: Could not resolve node-pty package.json`);
+  } catch (error) {
+    console.warn(`[asar-repack] WARNING: Could not resolve node-pty package.json: ${error instanceof Error ? error.message : String(error)}`);
     // Try to extract from the original asar as a fallback
     await extractNodePtyFromAsar({ appAsarPath, targetPlatformKey, sourceDir });
     return;
@@ -107,6 +108,7 @@ export async function replaceAppAsarFromStaging({
   appAsarPath,
   targetPlatformKey,
   runAsarCommand,
+  desktopPackageRoot,
 }) {
   const candidateAsarPath = `${appAsarPath}.next`;
   const candidateUnpackedPath = `${candidateAsarPath}.unpacked`;
@@ -172,7 +174,7 @@ export async function replaceAppAsarFromStaging({
 
   // Fallback: ensure node-pty prebuilds exist in staging directory for --unpack-dir to work
   console.log(`[asar-repack] Ensuring node-pty prebuilds in staging...`);
-  await ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath });
+  await ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath, desktopPackageRoot });
   console.log(`[asar-repack] ensureNodePtyPrebuildsInStaging completed`);
 
   try {

@@ -422,6 +422,7 @@ async function injectHoistedRuntimeModulesIntoAsar(context) {
         appAsarPath,
         targetPlatformKey: contextPlatformKey,
         runAsarCommand,
+        desktopPackageRoot,
       }),
     );
   } finally {
@@ -446,6 +447,7 @@ async function stripPackagedSourcemapReferences(context) {
         appAsarPath,
         targetPlatformKey: contextPlatformKey,
         runAsarCommand,
+        desktopPackageRoot,
       }),
   });
 }

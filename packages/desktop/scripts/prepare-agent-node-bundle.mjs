@@ -476,6 +476,12 @@ function stageKoffiForCuaPlugin() {
     console.log("[prepare:agent-bundle] zcode-cua-plugin not staged, skip koffi staging");
     return;
   }
+  // Only stage koffi if the real Computer Use producer is installed.
+  // The open-source placeholder package doesn't have koffi as a dependency.
+  if (!isRealComputerUseProducerInstalled({ desktopPackageRoot })) {
+    console.log("[prepare:agent-bundle] real CUA producer not installed, skip koffi staging");
+    return;
+  }
   stageKoffiIntoBundledAgents({
     koffiPackageRoot: adaptersRoot,
     glmDir: cuaPluginStagedDir,
