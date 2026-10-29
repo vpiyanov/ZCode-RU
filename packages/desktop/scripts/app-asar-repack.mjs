@@ -1,7 +1,10 @@
-import { access, rename, rm, cp } from "node:fs/promises";
-import { resolve } from "node:path";
+import { access, rename, rm, cp, mkdir } from "node:fs/promises";
+import { resolve, dirname } from "node:path";
+import { createRequire } from "node:module";
 
 export const ASAR_UNPACK_NATIVE_GLOB = "*.{node,dll,dylib,exe}";
+
+const require = createRequire(import.meta.url);
 
 async function pathExists(path) {
   try {
@@ -9,6 +12,77 @@ async function pathExists(path) {
     return true;
   } catch {
     return false;
+  }
+}
+
+async function ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath }) {
+  const targetDir = resolve(sourceDir, "node_modules", "node-pty", "prebuilds", targetPlatformKey);
+  if (await pathExists(targetDir)) {
+    console.log(`[asar-repack] node-pty prebuilds already present at ${targetDir}`);
+    return;
+  }
+
+  console.log(`[asar-repack] node-pty prebuilds not found at ${targetDir}, attempting to copy from source package`);
+
+  // Try to locate the node-pty package in the current node_modules tree
+  let nodePtyPackageRoot;
+  try {
+    const packageJsonPath = require.resolve("node-pty/package.json");
+    nodePtyPackageRoot = dirname(packageJsonPath);
+  } catch {
+    console.warn(`[asar-repack] WARNING: Could not resolve node-pty package.json`);
+    // Try to extract from the original asar as a fallback
+    await extractNodePtyFromAsar({ appAsarPath: arguments[2], targetPlatformKey, sourceDir });
+    return;
+  }
+
+  const sourcePrebuildDir = resolve(nodePtyPackageRoot, "prebuilds", targetPlatformKey);
+  if (!(await pathExists(sourcePrebuildDir))) {
+    console.warn(`[asar-repack] WARNING: Source prebuild directory not found: ${sourcePrebuildDir}`);
+    // Try to extract from the original asar as a fallback
+    await extractNodePtyFromAsar({ appAsarPath, targetPlatformKey, sourceDir });
+    return;
+  }
+
+  console.log(`[asar-repack] Copying node-pty prebuilds from ${sourcePrebuildDir} to ${targetDir}`);
+  await mkdir(targetDir, { recursive: true });
+  await cp(sourcePrebuildDir, targetDir, { recursive: true });
+}
+
+async function extractNodePtyFromAsar({ appAsarPath, targetPlatformKey, sourceDir }) {
+  console.log(`[asar-repack] Attempting to extract node-pty prebuilds from original asar`);
+  const platformSpecificDir = `node_modules/node-pty/prebuilds/${targetPlatformKey}`;
+  const tempExtractDir = `${sourceDir}-extract-pty`;
+  
+  try {
+    await rm(tempExtractDir, { force: true, recursive: true });
+    await mkdir(tempExtractDir, { recursive: true });
+    
+    // appAsarPath is already destructured from the parameter object
+    if (!appAsarPath) {
+      console.warn(`[asar-repack] WARNING: No appAsarPath provided for extraction`);
+      return;
+    }
+    
+    runAsarCommand([
+      "extract",
+      appAsarPath,
+      tempExtractDir,
+      `--filter=${platformSpecificDir}/**`
+    ]);
+    
+    const extractedPtyPath = `${tempExtractDir}/${platformSpecificDir}`;
+    if (await pathExists(extractedPtyPath)) {
+      console.log(`[asar-repack] Extracted native modules from asar, copying to staging`);
+      const targetDir = resolve(sourceDir, "node_modules", "node-pty", "prebuilds", targetPlatformKey);
+      await mkdir(resolve(sourceDir, "node_modules", "node-pty", "prebuilds", targetPlatformKey), { recursive: true });
+      await cp(extractedPtyPath, resolve(sourceDir, "node_modules", "node-pty", "prebuilds", targetPlatformKey), { recursive: true });
+      console.log(`[asar-repack] Extracted native modules from asar, copying to staging`);
+    } else {
+      console.warn(`[asar-repack] WARNING: Could not extract native modules from asar at ${platformSpecificDir}`);
+    }
+  } finally {
+    await rm(tempExtractDir, { force: true, recursive: true });
   }
 }
 
@@ -48,17 +122,61 @@ export async function replaceAppAsarFromStaging({
     rm(candidateUnpackedPath, { force: true, recursive: true }),
   ]);
 
-  // The original asar was created with --unpack-dir, so native modules are in the .unpacked subdirectory.
-  // We need to copy the .unpacked CONTENTS to the staging directory root so that --unpack-dir can find them.
-  // The --unpack-dir option expects the directory to exist in the sourceDir tree (e.g., sourceDir/node_modules/...).
-  // But the original asar stores native modules in a .unpacked subdirectory. We need to merge the .unpacked
-  // contents into the sourceDir root so that paths like node_modules/node-pty/prebuilds/win32-arm64 exist.
+  // Extract native modules from the original asar and place them in the staging directory
+  // so that the --unpack-dir option can find them during repacking.
+  // We need to extract the native modules from the original asar's .unpacked directory
+  // (if it exists) or extract them directly from the asar.
+  const originalUnpackedPath = `${appAsarPath}.unpacked`;
+  const platformSpecificDir = `node_modules/node-pty/prebuilds/${targetPlatformKey}`;
+  const sourcePtyPath = `${originalUnpackedPath}/${platformSpecificDir}`;
+  const destPtyPath = `${sourceDir}/${platformSpecificDir}`;
+
+  console.log(`[asar-repack] Looking for native modules at: ${sourcePtyPath}`);
+
+  if (await pathExists(sourcePtyPath)) {
+    console.log(`[asar-repack] Found native modules at ${sourcePtyPath}, copying to staging`);
+    await mkdir(dirname(destPtyPath), { recursive: true });
+    await cp(sourcePtyPath, destPtyPath, { recursive: true });
+  } else {
+    // Try to extract from the original asar directly
+    console.log(`[asar-repack] Native modules not found at expected path, extracting from original asar`);
+    const tempExtractDir = `${sourceDir}-extract-native`;
+    await rm(tempExtractDir, { force: true, recursive: true });
+    await mkdir(tempExtractDir, { recursive: true });
+    
+    try {
+      // Extract the specific native module directory from the original asar
+      runAsarCommand([
+        "extract",
+        appAsarPath,
+        tempExtractDir,
+        `--filter=${platformSpecificDir}/**`
+      ]);
+      
+      const extractedPtyPath = `${tempExtractDir}/${platformSpecificDir}`;
+      if (await pathExists(extractedPtyPath)) {
+        console.log(`[asar-repack] Extracted native modules from asar, copying to staging`);
+        await mkdir(dirname(destPtyPath), { recursive: true });
+        await cp(extractedPtyPath, destPtyPath, { recursive: true });
+      } else {
+        console.warn(`[asar-repack] WARNING: Could not extract native modules from asar at ${platformSpecificDir}`);
+      }
+    } finally {
+      await rm(tempExtractDir, { force: true, recursive: true });
+    }
+  }
+
+  // Also copy the original .unpacked directory if it exists (for other unpacked files)
+  const originalUnpackedPath = `${appAsarPath}.unpacked`;
   if (await pathExists(originalUnpackedPath)) {
-    console.log(`[asar-repack] Copying original .unpacked contents from ${originalUnpackedPath} to ${sourceDir}`);
+    console.log(`[asar-repack] Copying original .unpacked from ${originalUnpackedPath} to ${sourceDir}`);
     await cp(originalUnpackedPath, sourceDir, { recursive: true });
   } else {
     console.log(`[asar-repack] INFO: original .unpacked not found at ${originalUnpackedPath}, skipping copy`);
   }
+
+  // Fallback: ensure node-pty prebuilds exist in staging directory for --unpack-dir to work
+  await ensureNodePtyPrebuildsInStaging({ sourceDir, targetPlatformKey, appAsarPath });
 
   try {
     const packArgs = createAppAsarPackArgs({

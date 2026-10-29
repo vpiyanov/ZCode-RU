@@ -40,6 +40,11 @@ function normalizeTargetArch(rawArch) {
     case "arm64":
     case "aarch64":
       return "arm64";
+    case "universal":
+      // electron-builder may pass "universal" for macOS universal builds
+      // We can't build for universal directly, so fall back to host arch
+      // The actual build should be done separately for x64 and arm64
+      return process.arch === "arm64" ? "arm64" : "x64";
     default:
       throw new Error(`Unsupported target arch: ${rawArch}`);
   }

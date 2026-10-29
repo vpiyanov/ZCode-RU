@@ -35,6 +35,11 @@ const ELECTRON_BUILDER_ARCH = {
   3: "arm64",
 };
 
+function normalizeElectronBuilderArch(arch) {
+  const numArch = typeof arch === "string" ? Number(arch) : arch;
+  return ELECTRON_BUILDER_ARCH[numArch] ?? arch;
+}
+
 export function resolveElectronBuilderWindowsTarget({
   electronPlatformName,
   arch,
@@ -45,8 +50,8 @@ export function resolveElectronBuilderWindowsTarget({
       `[windows-cua-helper-assets] electron-builder context platform is not win32: ${String(electronPlatformName)}`,
     );
   }
-  const actualArch = ELECTRON_BUILDER_ARCH[arch];
-  if (!actualArch) {
+  const actualArch = normalizeElectronBuilderArch(arch);
+  if (!actualArch || (actualArch !== "x64" && actualArch !== "arm64")) {
     throw new Error(
       `[windows-cua-helper-assets] unsupported electron-builder Windows architecture: ${String(arch)}`,
     );

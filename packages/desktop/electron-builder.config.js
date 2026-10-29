@@ -349,6 +349,17 @@ function resolveMissingRuntimeModules(appAsarPath) {
   });
 }
 
+// Helper to compute platform key from electron-builder context (handles numeric arch 1=x64, 3=arm64)
+function getContextPlatformKey(context) {
+  const ELECTRON_BUILDER_ARCH = { 1: "x64", 3: "arm64" };
+  const normalizeArch = (arch) => {
+    const numArch = typeof arch === "string" ? Number(arch) : arch;
+    return ELECTRON_BUILDER_ARCH[numArch] ?? arch;
+  };
+  const arch = normalizeArch(context.arch);
+  return `${context.electronPlatformName}-${arch}`;
+}
+
 async function injectHoistedRuntimeModulesIntoAsar(context) {
   const appAsarPath = resolveAppAsarPath(context);
   if (!existsSync(appAsarPath)) {
@@ -404,11 +415,12 @@ async function injectHoistedRuntimeModulesIntoAsar(context) {
       }
     });
 
+    const contextPlatformKey = getContextPlatformKey(context);
     await runTimedAsync("afterPack:asar-pack", () =>
       replaceAppAsarFromStaging({
         sourceDir: stagingDir,
         appAsarPath,
-        targetPlatformKey: targetPlatform.key,
+        targetPlatformKey: contextPlatformKey,
         runAsarCommand,
       }),
     );
@@ -421,6 +433,7 @@ async function stripPackagedSourcemapReferences(context) {
   // electron-builder 的 files 规则能排除 .map 文件，但无法删除 JS/CSS 末尾
   // 指向 sourcemap 的注释；afterPack 注入运行时依赖后也可能重新带入第三方 sourceMappingURL。
   // 这里统一清理 app.asar 与 unpacked/extraResources，保证最终发布包不暴露 sourcemap 路径入口。
+  const contextPlatformKey = getContextPlatformKey(context);
   await cleanupPackagedSourcemaps({
     appAsarPath: resolveAppAsarPath(context),
     resourcesDir: resolvePackagedResourcesDir(context),
@@ -431,7 +444,7 @@ async function stripPackagedSourcemapReferences(context) {
       replaceAppAsarFromStaging({
         sourceDir,
         appAsarPath,
-        targetPlatformKey: targetPlatform.key,
+        targetPlatformKey: contextPlatformKey,
         runAsarCommand,
       }),
   });
@@ -442,7 +455,8 @@ function assertPackagedNativeResourcePolicy(context) {
   const entries = parseAsarListWithPackState(
     runAsarCommandAndReadStdout(["list", "--is-pack", appAsarPath]),
   );
-  const violations = findDesktopNativePackageViolations(entries, targetPlatform.key);
+  const contextPlatformKey = getContextPlatformKey(context);
+  const violations = findDesktopNativePackageViolations(entries, contextPlatformKey);
   if (violations.length > 0) {
     // supportedArchitectures 允许工作区准备多平台依赖，但安装包只能携带目标平台资源。
     // 之前 Canvas 和 node-pty 的其他平台 native 被同时写进 asar/unpacked，包体被放大数百 MiB。
@@ -451,9 +465,10 @@ function assertPackagedNativeResourcePolicy(context) {
 }
 
 function assertPackagedNodePtyPrebuild(context) {
+  const contextPlatformKey = getContextPlatformKey(context);
   const targetBinaryPath = resolvePackagedNodePtyPrebuildPath({
     resourcesDir: resolvePackagedResourcesDir(context),
-    platformKey: targetPlatform.key,
+    platformKey: contextPlatformKey,
   });
   if (!existsSync(targetBinaryPath))
     throw new Error(`node-pty 预编译产物缺失: ${targetBinaryPath}`);
@@ -461,12 +476,16 @@ function assertPackagedNodePtyPrebuild(context) {
 
 function assertPackagedCuaSharp(context) {
   if (!isSharpRequiredByComputerUse({ desktopPackageRoot })) return;
+  const contextPlatformKey = getContextPlatformKey(context);
+  // Convert contextPlatformKey to targetPlatform format for verifyStagedSharp
+  const [os, arch] = contextPlatformKey.split("-");
+  const contextTargetPlatform = { os, arch, key: contextPlatformKey };
   const problems = [
     [
       "packages/browser-use-plugin",
       verifyStagedSharp({
         resourcesDir: resolvePackagedResourcesDir(context),
-        targetPlatform,
+        targetPlatform: contextTargetPlatform,
         pluginRelativePath: "packages/browser-use-plugin",
       }),
     ],
@@ -474,7 +493,7 @@ function assertPackagedCuaSharp(context) {
       "packages/zcode-cua-plugin",
       verifyStagedSharp({
         resourcesDir: resolvePackagedResourcesDir(context),
-        targetPlatform,
+        targetPlatform: contextTargetPlatform,
         pluginRelativePath: "packages/zcode-cua-plugin",
       }),
     ],
@@ -489,9 +508,13 @@ function assertPackagedCuaSharp(context) {
 }
 
 function assertPackagedCuaKoffi(context) {
+  const contextPlatformKey = getContextPlatformKey(context);
+  // Convert contextPlatformKey to targetPlatform format for verifyStagedKoffi
+  const [os, arch] = contextPlatformKey.split("-");
+  const contextTargetPlatform = { os, arch, key: contextPlatformKey };
   const problems = verifyStagedKoffi({
     resourcesDir: resolvePackagedResourcesDir(context),
-    targetPlatform,
+    targetPlatform: contextTargetPlatform,
   });
   if (problems.length > 0) {
     throw new Error(
@@ -652,16 +675,21 @@ export default {
   },
 afterPack: async (context) => {
     // Compute target platform from electron-builder context to avoid module-load-time env var issues
+    // electron-builder passes arch as numeric (1=x64, 3=arm64) but it may be string "1"/"3" in some versions
     const ELECTRON_BUILDER_ARCH = {
       1: "x64",
       3: "arm64",
     };
+    const normalizeArch = (arch) => {
+      const numArch = typeof arch === "string" ? Number(arch) : arch;
+      return ELECTRON_BUILDER_ARCH[numArch] ?? arch;
+    };
     const contextTargetPlatform = context.electronPlatformName === "win32"
-      ? { os: "win32", arch: ELECTRON_BUILDER_ARCH[context.arch] || context.arch, key: `win32-${ELECTRON_BUILDER_ARCH[context.arch] || context.arch}` }
+      ? { os: "win32", arch: normalizeArch(context.arch), key: `win32-${normalizeArch(context.arch)}` }
       : context.electronPlatformName === "darwin"
-        ? { os: "darwin", arch: context.arch, key: `darwin-${context.arch}` }
+        ? { os: "darwin", arch: normalizeArch(context.arch), key: `darwin-${normalizeArch(context.arch)}` }
         : context.electronPlatformName === "linux"
-          ? { os: "linux", arch: context.arch, key: `linux-${context.arch}` }
+          ? { os: "linux", arch: normalizeArch(context.arch), key: `linux-${normalizeArch(context.arch)}` }
           : null;
     const actualWindowsTarget =
       context.electronPlatformName === "win32"
