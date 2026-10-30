@@ -616,13 +616,37 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ZCode-win-arm64
-          path: artifacts
+          path: artifacts/ZCode-win-arm64
 
-      - name: Download optional artifacts
+      - name: Download macOS x64 artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: ZCode-macos-x64
+          path: artifacts/ZCode-macos-x64
+
+      - name: Download macOS ARM64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ZCode-macos-arm64
+          path: artifacts/ZCode-macos-arm64
+
+      - name: Download Linux x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ZCode-linux-x64
+          path: artifacts/ZCode-linux-x64
+
+      - name: Download Linux ARM64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ZCode-linux-arm64
+          path: artifacts/ZCode-linux-arm64
+
+      - name: Download Windows x64 installer
+        uses: actions/download-artifact@v4
+        with:
+          name: ZCode-win-x64
+          path: artifacts/ZCode-win-x64
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
